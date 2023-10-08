@@ -75,6 +75,6 @@ app.delete('/todos/:id', async (req, res) => {
   }
 });
 
-app.listen(4444, () => {
+app.listen(process.env.PORT || 4444, () => {
   console.log('Server running');
 });
