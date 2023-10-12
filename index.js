@@ -16,6 +16,7 @@ const todoSchema = new mongoose.Schema({
   is_checked: Boolean
 });
 
+
 const Todo = mongoose.model('Todo', todoSchema);
 
 // GET all todos
