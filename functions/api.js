@@ -1,11 +1,9 @@
 const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
-require('dotenv').config();
-
+const serverless = require('serverless-http');
 const app = express();
-app.use(cors());
-app.use(express.json());
+const router = express.Router();
+const cors = require('cors');
+const mongoose = require('mongoose');
 
 mongoose.connect(process.env.DB_URI , { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log('Connected to MongoDB'))
@@ -16,11 +14,13 @@ const todoSchema = new mongoose.Schema({
   is_checked: Boolean
 });
 
-
 const Todo = mongoose.model('Todo', todoSchema);
 
-// GET all todos
-app.get('/todos', async (req, res) => {
+router.get('/', (req, res) => {
+  res.status(200).json("App is runnig...")
+});
+
+router.get('/todos', async (req, res) => {
   try {
     const todos = await Todo.find();
     res.json(todos);
@@ -29,9 +29,8 @@ app.get('/todos', async (req, res) => {
   }
 });
 
-//
 // GET a single todo
-app.get('/todos/:id', async (req, res) => {
+router.get('/todos/:id', async (req, res) => {
   try {
     const todo = await Todo.findById(req.params.id);
     if (!todo) return res.status(404).json({ message: 'Todo not found' });
@@ -42,7 +41,7 @@ app.get('/todos/:id', async (req, res) => {
 });
 
 // POST a new todo
-app.post('/todos', async (req, res) => {
+router.post('/todos', async (req, res) => {
   try {
     const newTodo = new Todo({
       name: req.body.name,
@@ -56,7 +55,7 @@ app.post('/todos', async (req, res) => {
 });
 
 // PUT (update) a todo
-app.put('/todos/:id', async (req, res) => {
+router.put('/todos/:id', async (req, res) => {
   try {
     const updatedTodo = await Todo.findByIdAndUpdate(req.params.id, req.body, { new: true });
     if (!updatedTodo) return res.status(404).json({ message: 'Todo not found' });
@@ -67,7 +66,7 @@ app.put('/todos/:id', async (req, res) => {
 });
 
 // DELETE a todo
-app.delete('/todos/:id', async (req, res) => {
+router.delete('/todos/:id', async (req, res) => {
   try {
     const todo = await Todo.findByIdAndDelete(req.params.id);
     if (!todo) return res.status(404).json({ message: 'Todo not found' });
@@ -77,6 +76,9 @@ app.delete('/todos/:id', async (req, res) => {
   }
 });
 
-app.listen(process.env.PORT || 4444, () => {
-  console.log('Server running');
-});
+
+app.use('/.netlify/functions/api', router);
+app.use(cors());
+app.use(express.json());
+
+module.exports.handler = serverless(app);
